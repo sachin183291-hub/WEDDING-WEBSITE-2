@@ -1,6 +1,7 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CalendarDays, ChevronDown, Clock3, Crown, Flower2, Heart, MapPin, Menu, Navigation, Sparkles, UtensilsCrossed, X } from 'lucide-react';
+import coupleImage from '@assets/generated_images/arjun-dharshini-wedding-couple.png';
 
 type Ceremony = {
   number: string;
@@ -35,32 +36,88 @@ function Kolam() {
 
 function WelcomeIllustration() {
   return (
-    <div className="welcome-art" aria-label="Traditional brass kuthuvilakku with jasmine garlands">
+    <div className="welcome-art" aria-label="Arjun and Dharshini in their Tamil wedding attire">
       <Garland />
       <Garland />
-      <div className="brass-lamp"><span className="lamp-flame" /></div>
-      <CoupleMark />
-      <Kolam />
+      <div className="welcome-couple-frame">
+        <img className="welcome-couple-image" src={coupleImage} alt="Arjun and Dharshini smiling together in traditional Tamil wedding attire" />
+      </div>
     </div>
   );
 }
 
-function CoupleMark() {
+function OpeningGate({ onOpen, reduced }: { onOpen: () => void; reduced: boolean }) {
+  const openButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    openButtonRef.current?.focus();
+  }, []);
+
   return (
-    <svg className="couple-mark" viewBox="0 0 180 100" aria-label="Arjun and Dharshini together" role="img">
-      <path d="M28 91c8-35 14-47 35-47s29 12 36 47" fill="#2f5d49" />
-      <circle cx="64" cy="30" r="18" fill="#9a5945" />
-      <path d="M46 29c4-18 29-22 39 0-12-7-27-6-39 0Z" fill="#3a292a" />
-      <path d="M61 42h7v8h-7Z" fill="#b57b29" />
-      <path d="M77 91c10-38 18-49 39-49s30 11 37 49" fill="#b64239" />
-      <circle cx="113" cy="29" r="18" fill="#a76850" />
-      <path d="M95 31c0-22 34-25 38-1l-5 7-12-20-18 18Z" fill="#33292b" />
-      <path d="M96 55q17 9 35 0" fill="none" stroke="#e0ae4f" strokeWidth="4" />
-      <circle cx="58" cy="30" r="2" fill="#f5d19a" /><circle cx="70" cy="30" r="2" fill="#f5d19a" />
-      <circle cx="107" cy="30" r="2" fill="#f5d19a" /><circle cx="119" cy="30" r="2" fill="#f5d19a" />
-      <path d="M61 38q4 3 8 0m38 0q4 3 8 0" fill="none" stroke="#71352e" strokeWidth="2" />
-      <path d="M79 65c9 8 13 8 20 0" fill="none" stroke="#e1b454" strokeWidth="2" />
-    </svg>
+    <motion.section
+      className="opening-gate"
+      initial={reduced ? false : { opacity: 1 }}
+      exit={reduced ? { opacity: 0 } : { opacity: 0, y: '-100%' }}
+      transition={{ duration: reduced ? 0.01 : 0.8, ease: [0.76, 0, 0.24, 1] }}
+      aria-label="Open Arjun and Dharshini's wedding invitation"
+    >
+      <div className="opening-gate-inner">
+        <span className="gate-ornament one" aria-hidden="true" />
+        <span className="gate-ornament two" aria-hidden="true" />
+        <div className="gate-copy">
+          <p className="gate-tamil font-tamil">ஸ்ரீ · சுபம் · மங்களம்</p>
+          <p className="gate-kicker">A Tamil wedding invitation</p>
+          <h1 className="gate-title">Arjun <span>&amp;</span><br />Dharshini</h1>
+          <p className="gate-date">Sunday · 08 February 2026 · Madurai</p>
+          <button ref={openButtonRef} className="gate-button" type="button" onClick={onOpen} data-testid="button-open-invitation">
+            Open invitation
+          </button>
+        </div>
+        <div className="gate-couple-frame">
+          <img className="gate-couple-image" src={coupleImage} alt="Arjun and Dharshini in traditional Tamil wedding attire" />
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function CelebrationReveal({ reduced }: { reduced: boolean }) {
+  if (reduced) return null;
+
+  return (
+    <motion.div
+      className="reveal-celebration"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      transition={{ duration: 2.7, ease: 'easeOut' }}
+      aria-hidden="true"
+    >
+      {Array.from({ length: 18 }, (_, index) => (
+        <i
+          className="celebration-heart"
+          key={`heart-${index}`}
+          style={{
+            left: `${(index * 17) % 103}%`,
+            animationDelay: `${(index % 7) * 0.08}s`,
+            ['--drift' as string]: `${(index % 2 ? 1 : -1) * (8 + (index % 5) * 4)}vw`,
+          } as CSSProperties}
+        />
+      ))}
+      {Array.from({ length: 20 }, (_, index) => (
+        <i
+          className="celebration-petal"
+          key={`petal-${index}`}
+          style={{ left: `${(index * 23) % 107}%`, animationDelay: `${(index % 8) * 0.06}s` }}
+        />
+      ))}
+      {Array.from({ length: 26 }, (_, index) => (
+        <i
+          className="celebration-dust"
+          key={`dust-${index}`}
+          style={{ left: `${(index * 31) % 101}%`, top: `${18 + ((index * 13) % 63)}%`, animationDelay: `${(index % 9) * 0.05}s` }}
+        />
+      ))}
+    </motion.div>
   );
 }
 
@@ -115,10 +172,29 @@ function RsvpModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (na
 }
 
 function App() {
+  const prefersReducedMotion = useReducedMotion();
+  const [invitationOpened, setInvitationOpened] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [motionOn, setMotionOn] = useState(true);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    if (!invitationOpened) document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [invitationOpened]);
+
+  const openInvitation = () => {
+    setInvitationOpened(true);
+    if (!prefersReducedMotion) {
+      setCelebrating(true);
+      window.setTimeout(() => setCelebrating(false), 2850);
+    }
+  };
 
   const showToast = (message: string) => {
     setToast(message);
@@ -145,6 +221,11 @@ function App() {
 
   return (
     <main className={`wedding-page ${motionOn ? '' : 'motion-paused'}`}>
+      <AnimatePresence mode="wait">
+        {!invitationOpened && <OpeningGate onOpen={openInvitation} reduced={Boolean(prefersReducedMotion)} />}
+      </AnimatePresence>
+      <AnimatePresence>{celebrating && <CelebrationReveal reduced={Boolean(prefersReducedMotion)} />}</AnimatePresence>
+      <div className="invitation-underlay" aria-hidden={!invitationOpened} inert={!invitationOpened}>
       <header className="wedding-nav">
         <button className="nav-mark" onClick={() => scrollToId('welcome')} aria-label="Back to the beginning" data-testid="button-home">
           <span className="nav-monogram">A<span>&amp;</span>D</span>
@@ -181,7 +262,7 @@ function App() {
             <button className="outline-button" onClick={() => scrollToId('functions')} data-testid="button-explore-functions">Explore the Functions</button>
           </div>
         </div>
-        <div className="hero-lamp" aria-label="A glowing kuthuvilakku" />
+        <img className="hero-couple" src={coupleImage} alt="Arjun and Dharshini in their wedding-getup" />
       </section>
 
       <section className="welcome" id="welcome">
@@ -287,6 +368,7 @@ function App() {
 
       <AnimatePresence>{rsvpOpen && <RsvpModal onClose={() => setRsvpOpen(false)} onConfirm={(name) => showToast(`Thank you, ${name}. We have received your RSVP.`)} />}</AnimatePresence>
       <AnimatePresence>{toast && <motion.div className="toast" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} role="status" data-testid="status-toast">{toast}</motion.div>}</AnimatePresence>
+      </div>
     </main>
   );
 }
