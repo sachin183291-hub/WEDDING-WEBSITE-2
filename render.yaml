@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: arjun-dharshini-wedding
+    env: static
+    # The build command runs from the root of the monorepo
+    buildCommand: pnpm install && pnpm run build
+    # The publish path is where Vite outputs the built files
+    staticPublishPath: artifacts/arjun-dharshini-wedding/dist
+    # Redirect all unmatched routes to index.html (useful for React apps)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
