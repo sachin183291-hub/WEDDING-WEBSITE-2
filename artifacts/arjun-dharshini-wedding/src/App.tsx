@@ -643,13 +643,22 @@ function App() {
           <button className="nav-cta" onClick={() => setRsvpOpen(true)} data-testid="button-nav-rsvp">RSVP <Heart size={13} /></button>
           <button className="nav-toggle" onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} data-testid="button-toggle-menu">{menuOpen ? <X size={17} /> : <Menu size={17} />}</button>
           <AnimatePresence>
-            {menuOpen && <motion.nav className="nav-menu" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} aria-label="Mobile navigation">
-              <button onClick={() => { scrollToId('functions'); setMenuOpen(false); }} data-testid="menu-functions">Functions</button>
-              <button onClick={() => { scrollToId('details'); setMenuOpen(false); }} data-testid="menu-details">Venue &amp; timing</button>
-              <button onClick={() => { scrollToId('gallery'); setMenuOpen(false); }} data-testid="menu-gallery">Memories</button>
-              <button onClick={() => { scrollToId('surprise'); setMenuOpen(false); }} data-testid="menu-surprise">Guest surprise</button>
-              <button onClick={() => { setRsvpOpen(true); setMenuOpen(false); }} data-testid="menu-rsvp">RSVP</button>
-            </motion.nav>}
+            {menuOpen && (
+              <motion.nav 
+                className="nav-menu" 
+                initial={{ opacity: 0, y: -8, scale: 0.95 }} 
+                animate={{ opacity: 1, y: 0, scale: 1 }} 
+                exit={{ opacity: 0, y: -8, scale: 0.95 }} 
+                transition={{ duration: 0.2 }}
+                aria-label="Mobile navigation"
+              >
+                <button onClick={() => { scrollToId('functions'); setMenuOpen(false); }} data-testid="menu-functions">Functions</button>
+                <button onClick={() => { scrollToId('details'); setMenuOpen(false); }} data-testid="menu-details">Venue &amp; timing</button>
+                <button onClick={() => { scrollToId('gallery'); setMenuOpen(false); }} data-testid="menu-gallery">Memories</button>
+                <button onClick={() => { scrollToId('surprise'); setMenuOpen(false); }} data-testid="menu-surprise">Guest surprise</button>
+                <button onClick={() => { setRsvpOpen(true); setMenuOpen(false); }} data-testid="menu-rsvp">RSVP</button>
+              </motion.nav>
+            )}
           </AnimatePresence>
         </header>
 

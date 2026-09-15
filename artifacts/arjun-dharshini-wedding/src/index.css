@@ -484,3 +484,76 @@
   from { transform: scaleY(0.3); }
   to { transform: scaleY(1); }
 }
+
+/* Comprehensive Mobile Responsiveness Overrides */
+@media (max-width: 800px) {
+  .wedding-nav {
+    z-index: 9999; /* Ensure navbar is always on top */
+  }
+  .nav-menu {
+    z-index: 9999;
+  }
+  /* Fix Hero clamping for very small screens */
+  .hero-title {
+    font-size: clamp(3rem, 15vw, 6rem) !important;
+  }
+  .hero-couple {
+    width: min(50vw, 220px) !important;
+    right: 5% !important;
+  }
+  /* Photo Book Overrides */
+  .photo-book {
+    flex-direction: column !important;
+    padding: 1.5rem 1rem !important;
+    gap: 2rem !important;
+    max-width: 100% !important;
+  }
+  .book-spine {
+    top: 50% !important;
+    bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 30px !important;
+    transform: translateY(-50%) !important;
+    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.05) 70%, transparent) !important;
+  }
+  .left-page, .right-page {
+    border: none !important;
+    padding: 0 !important;
+    gap: 2rem !important;
+    width: 100% !important;
+  }
+  .book-polaroid {
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+    transform: rotate(0) !important; /* Remove weird angles when stacked */
+  }
+  .book-tape-1, .book-tape-2, .book-tape-3, .book-tape-4 {
+    top: -10px !important;
+    transform: translateX(-50%) rotate(-2deg) !important;
+    left: 50% !important;
+    width: 80px !important;
+  }
+  .book-polaroid.mt-sm, .book-polaroid.mt-lg, .book-polaroid.mt-xl {
+    margin: 0 auto !important; /* Reset all negative top margins */
+  }
+  /* General Spacing Reductions */
+  .section-wrap {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+  }
+  .gallery, .scratch-section, .blessing-section {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+  }
+  .memories-section, .functions-section, .details-section {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+  }
+  .welcome-grid, .function-intro, .details-layout, .blessing-layout {
+    gap: 2rem !important;
+  }
+}
+
