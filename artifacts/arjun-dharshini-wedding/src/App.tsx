@@ -1,188 +1,292 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
-import { ArrowDown, ArrowUpRight, CalendarDays, ChevronDown, CirclePlay, Clock3, Heart, MapPin, Menu, Volume2, VolumeX, X } from 'lucide-react';
+import { useState, type FormEvent, type ReactNode } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { CalendarDays, ChevronDown, Clock3, Crown, Flower2, Heart, MapPin, Menu, Navigation, Sparkles, UtensilsCrossed, X } from 'lucide-react';
 
-type SceneKind =
-  | 'opening' | 'street' | 'city' | 'flowers' | 'home' | 'engagement' | 'dining' | 'bridal'
-  | 'procession' | 'mandapam' | 'muhurtham' | 'garland' | 'thaali' | 'blessing' | 'journey'
-  | 'details' | 'reception' | 'memories' | 'ending';
+type Ceremony = {
+  number: string;
+  name: string;
+  time: string;
+  note: string;
+  icon: typeof Flower2;
+};
 
-type Scene = { id: string; chapter: string; eyebrow: string; title: string; body: string; kind: SceneKind; palette: string; };
-
-const scenes: Scene[] = [
-  { id: 'dawn', chapter: '01 / 19', eyebrow: 'A wedding film from Madurai', title: 'The day begins\nwhere our story did.', body: 'A small, moving invitation for the people who made this possible.', kind: 'opening', palette: 'scene-dawn' },
-  { id: 'street', chapter: '02 / 19', eyebrow: 'Before the city wakes', title: 'A lane. Two bicycles.\nOne familiar hello.', body: 'Some stories begin with a grand gesture. Ours began with a morning ride past the jasmine seller.', kind: 'street', palette: 'scene-street' },
-  { id: 'madurai', chapter: '03 / 19', eyebrow: 'Madurai, in full colour', title: 'The city kept\nour secret well.', body: 'Under the shadow of the towers, Arjun found a reason to take the long way home.', kind: 'city', palette: 'scene-city' },
-  { id: 'flowers', chapter: '04 / 19', eyebrow: 'The flower market', title: 'The air smelled\nlike a promise.', body: 'Jasmine for the hair. Kanakambaram for the doorway. A little gold thread for luck.', kind: 'flowers', palette: 'scene-flowers' },
-  { id: 'home', chapter: '05 / 19', eyebrow: 'The old house in Anna Nagar', title: 'Every home has\na witness.', body: 'This one heard the first stories, served the strongest filter coffee, and opened its doors wide.', kind: 'home', palette: 'scene-home' },
-  { id: 'engagement', chapter: '06 / 19', eyebrow: 'A quiet evening', title: 'Then, suddenly,\nthere was a ring.', body: 'On the terrace, beneath a sky turning apricot, two families became one circle.', kind: 'engagement', palette: 'scene-engagement' },
-  { id: 'dining', chapter: '07 / 19', eyebrow: 'A Chettinad table', title: 'Come hungry.\nLeave with stories.', body: 'Long banana leaves, pepper in the air, and every auntie asking if you have eaten yet.', kind: 'dining', palette: 'scene-dining' },
-  { id: 'bridal', chapter: '08 / 19', eyebrow: 'In the room next door', title: 'Dharshini gets ready\nfor the whole sky.', body: 'Jasmine pinned, silk pleats set, laughter travelling through the wooden shutters.', kind: 'bridal', palette: 'scene-bridal' },
-  { id: 'procession', chapter: '09 / 19', eyebrow: 'The sound arrives first', title: 'Nadaswaram at the gate.\nThe day is official.', body: 'Follow the music. There is a groom somewhere inside the procession, trying not to smile too much.', kind: 'procession', palette: 'scene-procession' },
-  { id: 'mandapam', chapter: '10 / 19', eyebrow: 'At the mandapam', title: 'A roof of flowers.\nA room full of light.', body: 'Take your seat. Keep your phone away for a minute. Look at everyone you love.', kind: 'mandapam', palette: 'scene-mandapam' },
-  { id: 'muhurtham', chapter: '11 / 19', eyebrow: 'The muhurtham', title: 'The whole world\nholds its breath.', body: 'A sacred minute, held by drums, turmeric, and the steady hands of our parents.', kind: 'muhurtham', palette: 'scene-muhurtham' },
-  { id: 'garlands', chapter: '12 / 19', eyebrow: 'A playful ritual', title: 'One garland.\nThen another.', body: 'A little teasing before forever. Please cheer loudly for the second attempt.', kind: 'garland', palette: 'scene-garland' },
-  { id: 'thaali', chapter: '13 / 19', eyebrow: 'The golden thread', title: 'A small gold sun,\nclose to the heart.', body: 'The moment our two paths become one; witnessed by every face in the room.', kind: 'thaali', palette: 'scene-thaali' },
-  { id: 'blessing', chapter: '14 / 19', eyebrow: 'At the temple', title: 'We carry your blessings\ninto the future.', body: 'Before the feast and the photographs, a quiet thank you at Meenakshi Amman.', kind: 'blessing', palette: 'scene-blessing' },
-  { id: 'journey', chapter: '15 / 19', eyebrow: 'After the last bell', title: 'The road home\nlooks different now.', body: 'The sun slips behind the palms. The city keeps moving. We move with it, together.', kind: 'journey', palette: 'scene-journey' },
-  { id: 'details', chapter: '16 / 19', eyebrow: 'Keep this close', title: 'Your place in\nour story.', body: 'Save the date, find the mandapam, and come ready to make a little noise.', kind: 'details', palette: 'scene-details' },
-  { id: 'reception', chapter: '17 / 19', eyebrow: 'One more evening', title: 'Dinner, dancing,\nand your favourite people.', body: 'The film closes late. The music does not.', kind: 'reception', palette: 'scene-reception' },
-  { id: 'memories', chapter: '18 / 19', eyebrow: 'Frames from the road', title: 'Keep a little\nof this with you.', body: 'There will be photos. There will be stories. There will be one more plate of payasam.', kind: 'memories', palette: 'scene-memories' },
-  { id: 'ending', chapter: '19 / 19', eyebrow: 'With all our love', title: 'See you under\nthe Madurai sky.', body: 'Arjun & Dharshini · 18 January 2025', kind: 'ending', palette: 'scene-ending' },
+const ceremonies: Ceremony[] = [
+  { number: '01', name: 'Vratham & Nalangu', time: 'Friday · 06 February · 5:00 PM', note: 'Turmeric, laughter and the first blessings of the wedding days.', icon: Sparkles },
+  { number: '02', name: 'Nichayathartham', time: 'Saturday · 07 February · 10:30 AM', note: 'Our families formally celebrate the promise we have made to each other.', icon: Crown },
+  { number: '03', name: 'Muhurtham', time: 'Sunday · 08 February · 8:47 AM', note: 'Join us beneath the flowers as Arjun and Dharshini begin their life together.', icon: Flower2 },
+  { number: '04', name: 'Reception & Virundhu', time: 'Sunday · 08 February · 6:30 PM', note: 'A generous Tamil feast, music and a room full of the people we love.', icon: UtensilsCrossed },
 ];
 
-function Couple({ pose = 'walk', scale = 1 }: { pose?: string; scale?: number }) {
+function scrollToId(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function Thoranam() {
+  return <div className="thoranam" aria-hidden="true">{Array.from({ length: 8 }, (_, index) => <i className="leaf" key={index} />)}</div>;
+}
+
+function Garland({ className = '' }: { className?: string }) {
+  return <div className={`jasmine-strand ${className}`} aria-hidden="true">{Array.from({ length: 7 }, (_, index) => <span key={index} />)}</div>;
+}
+
+function Kolam() {
+  return <div className="kolam-mark" aria-hidden="true"><span className="kolam-dot" /></div>;
+}
+
+function WelcomeIllustration() {
   return (
-    <motion.div className={`couple couple-${pose}`} style={{ scale }} animate={{ y: [0, -3, 0] }} transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }} aria-label="Illustration of Arjun and Dharshini">
-      <svg viewBox="0 0 180 190" role="img">
-        <g className="figure arjun">
-          <circle cx="66" cy="53" r="16" fill="#9a573d" />
-          <path d="M51 51c2-16 28-19 34 0-9-5-23-7-34 0Z" fill="#332422" />
-          <path d="M55 72h24l10 57H48Z" fill="#224b4c" />
-          <path d="m54 77-17 32 8 4 18-27m14-9 12 35-8 3-12-28" fill="#24494a" />
-          <path d="M49 126h15v43H48Zm25 0h14v43H74Z" fill="#412d2a" />
-          <path d="M47 169h18v5H44Zm26 0h19v5H72Z" fill="#1f2929" />
-          <circle cx="61" cy="54" r="2" fill="#f3c48f" /><circle cx="71" cy="54" r="2" fill="#f3c48f" />
-          <path d="M62 62q5 4 10 0" fill="none" stroke="#572e2a" strokeWidth="2" />
-        </g>
-        <g className="figure dharshini">
-          <circle cx="119" cy="53" r="16" fill="#a9644b" />
-          <path d="M103 55c0-21 32-25 34-2l-4 7-8-18-18 13Z" fill="#2b2225" />
-          <path d="M104 72h30l15 72H95Z" fill="#b63d37" />
-          <path d="m105 75-13 29 7 4 17-25m17-8 20 31-8 6-17-27" fill="#b63d37" />
-          <path d="M100 140h16v32h-16Zm24 0h16v32h-16Z" fill="#e4b263" />
-          <path d="M98 171h20v5H96Zm24 0h20v5h-20Z" fill="#553436" />
-          <path d="M103 84q16 8 32 0" fill="none" stroke="#e5b55f" strokeWidth="4" />
-          <circle cx="114" cy="54" r="2" fill="#f3c48f" /><circle cx="124" cy="54" r="2" fill="#f3c48f" />
-          <path d="M114 62q5 4 10 0" fill="none" stroke="#572e2a" strokeWidth="2" />
-        </g>
-      </svg>
-    </motion.div>
-  );
-}
-
-function Palm({ side = 'left', tall = false }: { side?: string; tall?: boolean }) {
-  return <div className={`palm palm-${side} ${tall ? 'palm-tall' : ''}`}><div className="palm-trunk" /><div className="palm-crown"><i /><i /><i /><i /><i /></div></div>;
-}
-
-function SceneArt({ kind }: { kind: SceneKind }) {
-  const hills = <><div className="hill hill-back" /><div className="hill hill-front" /><Palm side="left" tall /><Palm side="right" /></>;
-  if (kind === 'opening' || kind === 'journey' || kind === 'ending') return <div className="scene-art landscape-art"><div className="sun" /><div className="cloud cloud-a cloud-drift" /><div className="cloud cloud-b cloud-drift" />{hills}<div className="road" /><div className="film-line" /></div>;
-  if (kind === 'street') return <div className="scene-art street-art"><div className="street-sky" /><div className="street-house house-a" /><div className="street-house house-b" /><div className="street-house house-c" /><div className="rangoli" /><div className="wire wire-a" /><div className="wire wire-b" /><div className="street-ground" /><div className="cycle" /><Palm side="right" /></div>;
-  if (kind === 'city' || kind === 'blessing') return <div className="scene-art city-art"><div className="city-sun" /><div className={`gopuram ${kind === 'blessing' ? 'gopuram-large' : ''}`}><span /><span /><span /><span /><span /></div><div className="city-buildings" /><div className="city-street" /><div className="lamp lamp-left lamp-flicker" /><div className="lamp lamp-right lamp-flicker" /></div>;
-  if (kind === 'flowers' || kind === 'bridal') return <div className="scene-art flower-art"><div className="market-awning" /><div className="flower-stall"><span className="flower-bundle pink" /><span className="flower-bundle yellow" /><span className="flower-bundle white" /></div><div className="flower-basket basket-a" /><div className="flower-basket basket-b" /><div className="floating-petal petal-a" /><div className="floating-petal petal-b" /><div className="floating-petal petal-c" /></div>;
-  if (kind === 'home' || kind === 'dining') return <div className="scene-art home-art"><div className="home-wall" /><div className="home-roof" /><div className="home-door"><div className="door-panel" /><div className="door-panel" /></div><div className="kolam" /><div className="home-window" /><div className="hanging-lamp lamp-flicker" />{kind === 'dining' && <div className="banana-table"><span /><span /><span /><span /></div>}</div>;
-  if (kind === 'engagement') return <div className="scene-art terrace-art"><div className="terrace-sky" /><div className="terrace-rail" /><div className="terrace-plant" /><div className="ring-orbit">A</div><div className="terrace-sun" /></div>;
-  if (kind === 'garland') return <div className="scene-art floral-arch-art"><div className="arch" /><div className="hanging-flower h-one" /><div className="hanging-flower h-two" /><div className="hanging-flower h-three" /></div>;
-  if (kind === 'procession') return <div className="scene-art procession-art"><div className="procession-sky" /><div className="procession-banner">நல்வரவு</div><div className="procession-arch" /><div className="nadaswaram" /><div className="drum" /><div className="dust" /></div>;
-  if (kind === 'mandapam' || kind === 'muhurtham' || kind === 'thaali') return <div className="scene-art mandapam-art"><div className="mandapam-bg" /><div className="mandapam-roof" /><div className="pillar p-one" /><div className="pillar p-two" /><div className="pillar p-three" /><div className="fire-bowl"><div className="fire-fire lamp-flicker" /></div>{kind === 'thaali' && <div className="thaali-thread"><div /></div>}</div>;
-  if (kind === 'reception') return <div className="scene-art reception-art"><div className="bokeh b-one" /><div className="bokeh b-two" /><div className="bokeh b-three" /><div className="stage-curtain curtain-left" /><div className="stage-curtain curtain-right" /><div className="stage-floor" /><div className="stage-light" /></div>;
-  if (kind === 'memories') return <div className="scene-art memories-art"><div className="memory-frame frame-one" /><div className="memory-frame frame-two" /><div className="memory-frame frame-three" /><div className="memory-spark spark-one" /><div className="memory-spark spark-two" /></div>;
-  return <div className="scene-art abstract-art"><div className="abstract-orb" /><div className="abstract-ring" /></div>;
-}
-
-function ParallaxScene({ scene, index, onOpenDetails }: { scene: Scene; index: number; onOpenDetails: () => void }) {
-  const ref = useRef<HTMLElement>(null);
-  const reduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
-  const copyY = useTransform(scrollYProgress, [0, 1], reduceMotion ? [0, 0] : [50, -50]);
-  const artY = useTransform(scrollYProgress, [0, 1], reduceMotion ? [0, 0] : [-30, 30]);
-  const isDark = ['opening', 'city', 'procession', 'muhurtham', 'journey', 'reception', 'ending'].includes(scene.kind);
-  return (
-    <section ref={ref} id={scene.id} className={`scene-shell ${scene.palette} ${isDark ? 'scene-dark' : ''}`} data-testid={`scene-${scene.id}`}>
-      <motion.div className="scene-art parallax-art" style={{ y: artY }}><SceneArt kind={scene.kind} /></motion.div>
-      <div className="scene-vignette" />
-      <motion.div className={`scene-copy ${scene.kind === 'details' ? 'scene-copy-details' : ''}`} style={{ y: copyY }}>
-        <div className="scene-meta"><span>{scene.chapter}</span><span className="scene-meta-rule" /><span>{scene.eyebrow}</span></div>
-        <h2 className="scene-title">{scene.title.split('\n').map((line) => <span key={line}>{line}</span>)}</h2>
-        <p className="scene-body">{scene.body}</p>
-        {scene.kind === 'opening' && <motion.button className="story-button scroll-cta" onClick={() => document.getElementById('street')?.scrollIntoView({ behavior: 'smooth' })} whileTap={{ scale: .96 }} data-testid="button-begin-story">Begin the story <ArrowDown size={15} /></motion.button>}
-        {scene.kind === 'details' && <DetailsCard onOpen={onOpenDetails} />}
-        {(scene.kind === 'opening' || scene.kind === 'ending') && <Couple pose={scene.kind === 'opening' ? 'walk' : 'together'} scale={scene.kind === 'opening' ? .82 : .98} />}
-        {scene.kind !== 'opening' && scene.kind !== 'details' && scene.kind !== 'ending' && ['street', 'city', 'flowers', 'home', 'engagement', 'dining', 'bridal', 'procession', 'mandapam', 'muhurtham', 'garland', 'thaali', 'blessing', 'journey', 'reception', 'memories'].includes(scene.kind) && <Couple pose={scene.kind} scale={scene.kind === 'thaali' ? .7 : .62} />}
-        {scene.kind === 'ending' && <p className="ending-signature">With love,<br /><strong>Arjun &amp; Dharshini</strong></p>}
-      </motion.div>
-      <span className="scene-index">{String(index + 1).padStart(2, '0')}</span>
-    </section>
-  );
-}
-
-function DetailsCard({ onOpen }: { onOpen: () => void }) {
-  return (
-    <div className="details-card" data-testid="card-invitation-details">
-      <div className="detail-row"><CalendarDays size={16} /><div><span>Saturday, 18 January 2025</span><small>Save the date</small></div></div>
-      <div className="detail-row"><Clock3 size={16} /><div><span>6:30 in the evening</span><small>Reception follows</small></div></div>
-      <div className="detail-row"><MapPin size={16} /><div><span>Thirumalai Mahal</span><small>Madurai, Tamil Nadu</small></div></div>
-      <button className="details-link" onClick={onOpen} data-testid="button-open-details">View the full invitation <ArrowUpRight size={15} /></button>
+    <div className="welcome-art" aria-label="Traditional brass kuthuvilakku with jasmine garlands">
+      <Garland />
+      <Garland />
+      <div className="brass-lamp"><span className="lamp-flame" /></div>
+      <CoupleMark />
+      <Kolam />
     </div>
   );
 }
 
-function FullDetails({ onClose }: { onClose: () => void }) {
+function CoupleMark() {
   return (
-    <motion.div className="details-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} data-testid="dialog-full-details">
-      <motion.div className="details-modal" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }}>
-        <button className="modal-close" onClick={onClose} aria-label="Close invitation details" data-testid="button-close-details"><X size={18} /></button>
-        <span className="modal-kicker">The invitation</span>
-        <h3 className="font-display">A day made<br /><em>for togetherness.</em></h3>
-        <div className="modal-divider" />
-        <p>We would be honoured to have you with us as our families gather under the jasmine canopy.</p>
-        <div className="modal-schedule">
-          <div><span>01</span><strong>Jan 18, 2025</strong><small>Saturday evening</small></div>
-          <div><span>02</span><strong>6:30 PM onwards</strong><small>Reception &amp; dinner</small></div>
-          <div><span>03</span><strong>Thirumalai Mahal</strong><small>Melur Road, Madurai</small></div>
-        </div>
-        <button className="modal-action" onClick={onClose} data-testid="button-save-invitation">I will be there <Heart size={15} /></button>
+    <svg className="couple-mark" viewBox="0 0 180 100" aria-label="Arjun and Dharshini together" role="img">
+      <path d="M28 91c8-35 14-47 35-47s29 12 36 47" fill="#2f5d49" />
+      <circle cx="64" cy="30" r="18" fill="#9a5945" />
+      <path d="M46 29c4-18 29-22 39 0-12-7-27-6-39 0Z" fill="#3a292a" />
+      <path d="M61 42h7v8h-7Z" fill="#b57b29" />
+      <path d="M77 91c10-38 18-49 39-49s30 11 37 49" fill="#b64239" />
+      <circle cx="113" cy="29" r="18" fill="#a76850" />
+      <path d="M95 31c0-22 34-25 38-1l-5 7-12-20-18 18Z" fill="#33292b" />
+      <path d="M96 55q17 9 35 0" fill="none" stroke="#e0ae4f" strokeWidth="4" />
+      <circle cx="58" cy="30" r="2" fill="#f5d19a" /><circle cx="70" cy="30" r="2" fill="#f5d19a" />
+      <circle cx="107" cy="30" r="2" fill="#f5d19a" /><circle cx="119" cy="30" r="2" fill="#f5d19a" />
+      <path d="M61 38q4 3 8 0m38 0q4 3 8 0" fill="none" stroke="#71352e" strokeWidth="2" />
+      <path d="M79 65c9 8 13 8 20 0" fill="none" stroke="#e1b454" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function SectionReveal({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const reduced = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduced ? false : { opacity: 0, y: 22 }}
+      whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.18 }}
+      transition={{ duration: .7, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function RsvpModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (name: string) => void }) {
+  const [name, setName] = useState('');
+  const [guests, setGuests] = useState('2');
+  const [attendance, setAttendance] = useState('Muhurtham and reception');
+  const [submitted, setSubmitted] = useState(false);
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!name.trim()) return;
+    setSubmitted(true);
+    onConfirm(name.trim());
+  };
+
+  return (
+    <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} data-testid="dialog-rsvp">
+      <motion.div className="rsvp-modal" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 18 }} onClick={(event) => event.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="Close RSVP form" data-testid="button-close-rsvp"><X size={16} /></button>
+        <span className="section-kicker">Let us plan for you</span>
+        <h2>Will you join us?</h2>
+        <p>Tell us how many places to keep at the mandapam and virundhu. We cannot wait to welcome you.</p>
+        {submitted ? (
+          <div className="form-success" data-testid="status-rsvp-success">Thank you, {name}. Your place is lovingly kept for {guests === '1' ? 'you' : `${guests} guests`} at the {attendance.toLowerCase()}.</div>
+        ) : (
+          <form className="rsvp-form" onSubmit={submit}>
+            <label htmlFor="guest-name">Your name<input id="guest-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="For example, Lakshmi Raman" required data-testid="input-rsvp-name" /></label>
+            <label htmlFor="guest-count">Number attending<select id="guest-count" value={guests} onChange={(event) => setGuests(event.target.value)} data-testid="select-rsvp-guests"><option value="1">1 guest</option><option value="2">2 guests</option><option value="3">3 guests</option><option value="4">4 guests</option></select></label>
+            <label htmlFor="guest-event">Joining us for<select id="guest-event" value={attendance} onChange={(event) => setAttendance(event.target.value)} data-testid="select-rsvp-event"><option>Muhurtham and reception</option><option>Reception only</option><option>All functions</option></select></label>
+            <button className="primary-button" type="submit" data-testid="button-submit-rsvp">Send my RSVP <Heart size={15} /></button>
+          </form>
+        )}
       </motion.div>
     </motion.div>
   );
 }
 
 function App() {
-  const [active, setActive] = useState(0);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [started, setStarted] = useState(false);
-  const ids = useMemo(() => scenes.map((scene) => scene.id), []);
+  const [rsvpOpen, setRsvpOpen] = useState(false);
+  const [toast, setToast] = useState('');
+  const [motionOn, setMotionOn] = useState(true);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (visible) {
-        const next = ids.indexOf(visible.target.id);
-        if (next >= 0) setActive(next);
-      }
-    }, { threshold: [0.3, 0.6, 0.9] });
-    ids.forEach((id) => { const element = document.getElementById(id); if (element) observer.observe(element); });
-    return () => observer.disconnect();
-  }, [ids]);
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(''), 3200);
+  };
 
-  const jumpTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    setMenuOpen(false);
-    setStarted(true);
+  const addToCalendar = () => {
+    const calendar = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Arjun and Dharshini//Wedding//EN',
+      'BEGIN:VEVENT', 'UID:arjun-dharshini-2026@example.com', 'DTSTAMP:20250101T000000Z',
+      'DTSTART:20260208T084700', 'DTEND:20260208T120000', 'SUMMARY:Arjun and Dharshini - Muhurtham',
+      'LOCATION:Thirumalai Mahal, Melur Road, Madurai, Tamil Nadu', 'DESCRIPTION:Join us for the muhurtham of Arjun and Dharshini.',
+      'END:VEVENT', 'END:VCALENDAR',
+    ].join('\r\n');
+    const blob = new Blob([calendar], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'arjun-dharshini-wedding.ics';
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('The wedding date has been added to your calendar.');
   };
 
   return (
-    <main className="film-grain wedding-film">
-      <header className={`film-nav ${active > 0 ? 'film-nav-scrolled' : ''}`}>
-        <button className="wordmark" onClick={() => jumpTo('dawn')} data-testid="button-home"><span className="wordmark-mark">A<span>&amp;</span>D</span><span className="wordmark-copy">A Madurai<br />wedding film</span></button>
-        <div className="nav-actions">
-          <button className="sound-toggle" onClick={() => setSoundOn(!soundOn)} data-testid="button-toggle-sound">{soundOn ? <Volume2 size={15} /> : <VolumeX size={15} />}<span>{soundOn ? 'Sound on' : 'Sound off'}</span></button>
-          <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open story chapters" data-testid="button-toggle-menu">{menuOpen ? <X size={19} /> : <Menu size={19} />}</button>
-        </div>
+    <main className={`wedding-page ${motionOn ? '' : 'motion-paused'}`}>
+      <header className="wedding-nav">
+        <button className="nav-mark" onClick={() => scrollToId('welcome')} aria-label="Back to the beginning" data-testid="button-home">
+          <span className="nav-monogram">A<span>&amp;</span>D</span>
+          <span className="nav-copy">Arjun &amp; Dharshini<small>Madurai · 08 February 2026</small></span>
+        </button>
+        <nav className="nav-links" aria-label="Wedding invitation navigation">
+          <button onClick={() => scrollToId('functions')} data-testid="link-functions">Functions</button>
+          <button onClick={() => scrollToId('details')} data-testid="link-details">Details</button>
+          <button onClick={() => scrollToId('blessings')} data-testid="link-blessings">Families</button>
+        </nav>
+        <button className="nav-cta" onClick={() => setRsvpOpen(true)} data-testid="button-nav-rsvp">RSVP <Heart size={13} /></button>
+        <button className="nav-toggle" onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} data-testid="button-toggle-menu">{menuOpen ? <X size={17} /> : <Menu size={17} />}</button>
+        <AnimatePresence>
+          {menuOpen && <motion.nav className="nav-menu" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} aria-label="Mobile navigation">
+            <button onClick={() => { scrollToId('functions'); setMenuOpen(false); }} data-testid="menu-functions">Functions</button>
+            <button onClick={() => { scrollToId('details'); setMenuOpen(false); }} data-testid="menu-details">Venue &amp; timing</button>
+            <button onClick={() => { scrollToId('gallery'); setMenuOpen(false); }} data-testid="menu-gallery">Memories</button>
+            <button onClick={() => { setRsvpOpen(true); setMenuOpen(false); }} data-testid="menu-rsvp">RSVP</button>
+          </motion.nav>}
+        </AnimatePresence>
       </header>
-      <aside className="story-progress" aria-label="Story progress">
-        <div className="progress-label"><span>THE FILM</span><strong>{String(active + 1).padStart(2, '0')}</strong><span>/ {String(scenes.length).padStart(2, '0')}</span></div>
-        <div className="progress-rail">{scenes.map((scene, index) => <button key={scene.id} className={active === index ? 'is-active' : ''} onClick={() => jumpTo(scene.id)} aria-label={`Go to ${scene.eyebrow}`} data-testid={`button-chapter-${index + 1}`}><span /></button>)}</div>
-        <div className="progress-caption">scroll to travel</div>
-      </aside>
-      {menuOpen && <motion.nav className="chapter-menu" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} data-testid="nav-chapters"><span className="menu-kicker">The chapters</span>{scenes.map((scene, index) => <button key={scene.id} onClick={() => jumpTo(scene.id)} className={active === index ? 'is-current' : ''} data-testid={`link-chapter-${index + 1}`}><span>{scene.chapter}</span>{scene.eyebrow}</button>)}</motion.nav>}
-      {!started && <div className="scroll-hint"><ChevronDown size={16} /><span>Scroll slowly</span></div>}
-      {scenes.map((scene, index) => <ParallaxScene key={scene.id} scene={scene} index={index} onOpenDetails={() => setDetailsOpen(true)} />)}
-      <footer className="film-footer"><span>AD / 2025</span><span>Made with all our love in Madurai</span><button onClick={() => jumpTo('dawn')} data-testid="button-replay-film"><CirclePlay size={15} /> Replay the film</button></footer>
-      {detailsOpen && <FullDetails onClose={() => setDetailsOpen(false)} />}
+
+      <section className="hero" id="home">
+        <Thoranam />
+        <div className="petal-field" aria-hidden="true"><i /><i /><i /><i /><i /></div>
+        <div className="hero-content">
+          <p className="hero-tamil font-tamil">ஸ்ரீ · சுபம் · மங்களம்</p>
+          <p className="hero-kicker">With the blessings of our parents</p>
+          <h1 className="hero-title">Arjun <span className="hero-amp">&amp;</span><br /><span>Dharshini</span></h1>
+          <p className="hero-subtitle">invite you to celebrate their wedding<br />in the warmth of family, flowers and music.</p>
+          <div className="hero-date"><span>Sunday, 08 February 2026</span><i /><span>Madurai</span></div>
+          <div className="hero-actions">
+            <button className="primary-button" onClick={() => scrollToId('welcome')} data-testid="button-view-invitation">View Invitation <ChevronDown size={15} /></button>
+            <button className="outline-button" onClick={() => scrollToId('functions')} data-testid="button-explore-functions">Explore the Functions</button>
+          </div>
+        </div>
+        <div className="hero-lamp" aria-label="A glowing kuthuvilakku" />
+      </section>
+
+      <section className="welcome" id="welcome">
+        <div className="section-wrap welcome-grid">
+          <SectionReveal><WelcomeIllustration /></SectionReveal>
+          <SectionReveal>
+            <article className="welcome-note ornament-border">
+              <span className="section-kicker">A joyful invitation</span>
+              <h2 className="section-heading">Two hearts, <em>one home.</em></h2>
+              <p className="section-copy">With folded hands and full hearts, we invite you to witness the sacred union of Arjun, son of <strong>Meenakshi &amp; Raghavan</strong>, and Dharshini, daughter of <strong>Vasanthi &amp; S. Kumar</strong>.</p>
+              <p className="section-copy">Come for the nadaswaram, stay for the virundhu, and bless the beginning of a beautiful new home for our families.</p>
+              <div className="parents-line"><div><strong>Arjun</strong> son of Meenakshi &amp; Raghavan</div><div><strong>Dharshini</strong> daughter of Vasanthi &amp; S. Kumar</div></div>
+            </article>
+          </SectionReveal>
+        </div>
+      </section>
+
+      <section className="functions" id="functions">
+        <div className="section-wrap">
+          <SectionReveal className="function-intro">
+            <div><span className="section-kicker">The wedding days</span><h2 className="section-heading">Every ritual has<br /><em>its own joy.</em></h2></div>
+            <p className="section-copy">Our celebrations begin with turmeric and end with a feast. We would be honoured to have you with us for the moments that make a marriage.</p>
+          </SectionReveal>
+          <div className="function-list">
+            {ceremonies.map(({ number, name, time, note, icon: Icon }, index) => (
+              <SectionReveal key={name}>
+                <button className="function-row" onClick={() => showToast(`${name} is at ${time}. We hope to see you there.`)} data-testid={`button-function-${index + 1}`}>
+                  <span className="function-num">{number}</span><span className="function-name">{name}</span><span className="function-time">{time}</span><span className="function-note">{note}</span><span className="function-icon"><Icon size={16} /></span>
+                </button>
+              </SectionReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="details-section" id="details">
+        <div className="section-wrap details-layout">
+          <SectionReveal>
+            <span className="section-kicker">Keep this close</span>
+            <h2 className="section-heading">The <em>muhurtham</em><br />and the place.</h2>
+            <div className="details-panel">
+              <div className="detail-item"><CalendarDays size={20} /><div><small>Wedding day</small><strong>Sunday, 08 February 2026</strong><p>Come early, settle in and share the morning coffee with us.</p></div></div>
+              <div className="detail-item"><Clock3 size={20} /><div><small>Auspicious time</small><strong>8:47 AM · Thai Poosam</strong><p>Muhurtham beneath the jasmine mandapam, followed by lunch.</p></div></div>
+              <div className="detail-item"><MapPin size={20} /><div><small>Wedding venue</small><strong>Thirumalai Mahal</strong><p>Melur Road, near Anna Nagar, Madurai, Tamil Nadu 625020.</p></div></div>
+            </div>
+            <button className="primary-button" onClick={addToCalendar} data-testid="button-add-calendar">Add to Calendar <CalendarDays size={15} /></button>
+          </SectionReveal>
+          <SectionReveal>
+            <article className="venue-card ornament-border">
+              <div className="venue-top"><span>Madurai</span><span>08 · 02 · 26</span></div>
+              <h3>Thirumalai<br />Mahal</h3>
+              <p>A bright mandapam, tall brass lamps and enough room for every auntie, cousin and friend who made us who we are.</p>
+              <button className="outline-button map-button" onClick={() => showToast('Directions: Melur Road, near Anna Nagar, Madurai.')} data-testid="button-view-directions"><Navigation size={15} /> View directions</button>
+              <div className="mandapam-columns" aria-hidden="true" />
+            </article>
+          </SectionReveal>
+        </div>
+      </section>
+
+      <section className="blessings" id="blessings">
+        <div className="section-wrap blessing-layout">
+          <SectionReveal>
+            <span className="section-kicker">With family blessings</span>
+            <h2 className="section-heading">A marriage is<br /><em>many hands.</em></h2>
+            <p className="section-copy">We arrive at this day carrying the love, patience and prayers of the families who have held us close.</p>
+            <div className="family-list">
+              <div className="family-block"><span>Arjun's family</span><strong>Meenakshi &amp; Raghavan</strong><p>Madurai · Tirunelveli</p></div>
+              <div className="family-block"><span>Dharshini's family</span><strong>Vasanthi &amp; S. Kumar</strong><p>Madurai · Dindigul</p></div>
+            </div>
+          </SectionReveal>
+          <SectionReveal>
+            <div className="blessing-quote"><Kolam /><p>“May your home always have the light of a lamp, the fragrance of jasmine and the sound of people you love.”</p><cite>— A blessing from both our families</cite></div>
+          </SectionReveal>
+        </div>
+      </section>
+
+      <section className="gallery" id="gallery">
+        <div className="section-wrap">
+          <div className="gallery-top"><div><span className="section-kicker">Little wedding memories</span><h2 className="section-heading">Bring your <em>favourite</em> memories.</h2></div><p className="section-copy">Wear your best silk, bring your loudest blessings and leave a little space for payasam.</p></div>
+          <div className="gallery-grid">
+            <div className="memory-tile tall"><div className="tile-flower" /><div><h3>Jasmine mornings</h3><p>For flowers in the hair and on the doorway.</p></div></div>
+            <div className="memory-tile gold"><div className="tile-lamp" /><div><h3>Brass &amp; gold</h3><p>For a day made auspicious.</p></div></div>
+            <div className="memory-tile cream"><div><h3>Silk &amp; veshti</h3><p>Traditional, joyful, entirely us.</p></div></div>
+            <div className="memory-tile"><div><h3>Nadaswaram at the gate</h3><p>Follow the music to the mandapam.</p></div></div>
+            <div className="memory-tile gold"><div><h3>Banana-leaf virundhu</h3><p>Please come hungry.</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rsvp-section" id="rsvp">
+        <div className="section-wrap">
+          <SectionReveal><span className="section-kicker">Your presence is our present</span><h2 className="section-heading">Will you come<br /><em>bless us?</em></h2><p className="section-copy">Please let us know before 15 January so we can keep your place at the mandapam and the dining leaf.</p><div className="rsvp-actions"><button className="primary-button" onClick={() => setRsvpOpen(true)} data-testid="button-open-rsvp">RSVP for the wedding <Heart size={15} /></button><button className="outline-button" onClick={addToCalendar} data-testid="button-calendar-rsvp">Save the date <CalendarDays size={15} /></button></div></SectionReveal>
+        </div>
+      </section>
+
+      <section className="closing">
+        <Thoranam />
+        <span className="font-script">நல்வரவு · Nalvaravu</span>
+        <h2>See you under<br />the jasmine canopy.</h2>
+        <p>With all our love and gratitude,<br /><strong>Arjun &amp; Dharshini</strong></p>
+        <div className="closing-footer"><span>Madurai · Tamil Nadu</span><span>Our wedding invitation</span><button onClick={() => setMotionOn((value) => !value)} data-testid="button-toggle-motion">{motionOn ? 'Pause floral motion' : 'Play floral motion'}</button></div>
+      </section>
+
+      <AnimatePresence>{rsvpOpen && <RsvpModal onClose={() => setRsvpOpen(false)} onConfirm={(name) => showToast(`Thank you, ${name}. We have received your RSVP.`)} />}</AnimatePresence>
+      <AnimatePresence>{toast && <motion.div className="toast" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} role="status" data-testid="status-toast">{toast}</motion.div>}</AnimatePresence>
     </main>
   );
 }
