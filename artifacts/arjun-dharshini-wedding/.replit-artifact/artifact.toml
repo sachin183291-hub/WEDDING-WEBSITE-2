@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Arjun & Dharshini Wedding Film"
+description = "An interactive animated Tamil wedding storybook for Arjun and Dharshini, set in South Tamil Nadu with cinematic scroll scenes, layered parallax, ceremony storytelling, event details, and a memory finale."
+version = "1.0.0"
+id = "artifacts/arjun-dharshini-wedding"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19861
+
+[services.development]
+run = "pnpm --filter @workspace/arjun-dharshini-wedding run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/arjun-dharshini-wedding", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/arjun-dharshini-wedding/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19861"
+BASE_PATH = "/"
